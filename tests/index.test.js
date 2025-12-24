@@ -51,9 +51,25 @@ function testParseMultipleAttributes() {
   console.log('testParseMultipleAttributes passed!');
 }
 
+function testToHTML() {
+  const html = '<p id="foo" class="bar">Hello, world!</p>';
+  const doc = parseHTML(html);
+  assert.strictEqual(doc.toHTML({pretty: false}), html);
+  console.log('testToHTML passed!');
+}
+
+function testToText() {
+  const html = '<p>Hello, <b>world</b>!</p>';
+  const doc = parseHTML(html);
+  assert.strictEqual(doc.toText(), 'Hello, world!');
+  console.log('testToText passed!');
+}
+
 
 testParseText();
 testParseStartTag();
 testParseEndTag();
 testParseAttribute();
 testParseMultipleAttributes();
+testToHTML();
+testToText();

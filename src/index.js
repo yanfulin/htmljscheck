@@ -19,5 +19,7 @@ export function parseHTML(html, options = {}) {
   return {
     root: treeBuilder.document,
     errors: [],
+    toHTML: (options) => treeBuilder.document.toHTML(options),
+    toText: (options) => treeBuilder.document.toText(options),
   };
 }

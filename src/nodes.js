@@ -8,11 +8,23 @@ export class Node {
     this.startIndex = -1;
     this.endIndex = -1;
   }
+
+  toHTML(options = { pretty: true, indentSize: 2 }) {
+    return this.children.map(child => child.toHTML(options)).join('');
+  }
+
+  toText(options = { separator: ' ' }) {
+    return this.children.map(child => child.toText(options)).join('');
+  }
 }
 
 export class DocumentNode extends Node {
   constructor() {
     super('document');
+  }
+
+  toText(options = { separator: ' ' }) {
+    return this.children.map(child => child.toText(options)).join('').replace(/\s+/g, ' ').trim();
   }
 }
 
@@ -23,6 +35,15 @@ export class ElementNode extends Node {
     this.attributes = {};
     this.namespace = namespace;
   }
+
+  toHTML(options = { pretty: true, indentSize: 2 }) {
+    const attrs = Object.entries(this.attributes).map(([key, value]) => `${key}="${value}"`).join(' ');
+    const childrenHTML = this.children.map(child => child.toHTML(options)).join('');
+    if (attrs) {
+      return `<${this.tag} ${attrs}>${childrenHTML}</${this.tag}>`;
+    }
+    return `<${this.tag}>${childrenHTML}</${this.tag}>`;
+  }
 }
 
 export class TextNode extends Node {
@@ -30,12 +51,28 @@ export class TextNode extends Node {
     super('text');
     this.text = text;
   }
+
+  toHTML(options) {
+    return this.text;
+  }
+
+  toText(options) {
+    return this.text;
+  }
 }
 
 export class CommentNode extends Node {
   constructor(text) {
     super('comment');
     this.text = text;
+  }
+
+  toHTML(options) {
+    return `<!--${this.text}-->`;
+  }
+
+  toText(options) {
+    return '';
   }
 }
 
@@ -45,5 +82,19 @@ export class DoctypeNode extends Node {
     this.name = name;
     this.publicId = publicId;
     this.systemId = systemId;
+  }
+
+  toHTML(options) {
+    if (this.publicId) {
+      return `<!DOCTYPE ${this.name} PUBLIC "${this.publicId}" "${this.systemId}">`;
+    }
+    if (this.systemId) {
+      return `<!DOCTYPE ${this.name} SYSTEM "${this.systemId}">`;
+    }
+    return `<!DOCTYPE ${this.name}>`;
+  }
+
+  toText(options) {
+    return '';
   }
 }
