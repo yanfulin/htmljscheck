@@ -16,7 +16,8 @@
   },
   "scripts": {
     "test": "node tests/parser.test.js",
-    "build": "rollup -c"
+    "build": "rollup -c && cpx playground.html dist && cpx src/index.js dist/src",
+    "prebuild": "rm -rf dist"
   },
   "keywords": [
     "html",
@@ -27,6 +28,7 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "^26.0.1",
     "@rollup/plugin-node-resolve": "^15.2.3",
-    "rollup": "^4.19.0"
+    "rollup": "^4.19.0",
+    "cpx": "^1.5.0"
   }
 }

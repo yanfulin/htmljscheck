@@ -1,0 +1,8 @@
+To check the `index.html` file, you can open it directly in a web browser.
+
+1.  Open your file explorer and navigate to the root of your project directory.
+2.  Double-click `index.html` or drag it into your web browser (e.g., Chrome, Firefox, Edge).
+
+You should see an HTML playground with a textarea for input and several output areas for the DOM representation, HTML serialization, text content, and any parsing errors.
+
+Try pasting different HTML snippets into the input textarea and observe the outputs. This will allow you to interactively test the `justjshtml` library.
