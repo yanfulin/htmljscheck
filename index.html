@@ -256,7 +256,7 @@
         let currentDocument = null; // To store the parsed document for selector queries
 
         // Example HTML
-        htmlInput.value = "<!DOCTYPE html>
+        htmlInput.value = `<!DOCTYPE html>
 <html>
 <head>
   <title>Example Page</title>
@@ -265,16 +265,16 @@
   <header>
     <nav>
       <ul>
-        <li><a href=\"/\" class=\"active\">Home</a></li>
-        <li><a href=\"/about\">About</a></li>
-        <li><a href=\"/contact\">Contact</a></li>
+        <li><a href="/" class="active">Home</a></li>
+        <li><a href="/about">About</a></li>
+        <li><a href="/contact">Contact</a></li>
       </ul>
     </nav>
   </header>
   <main>
     <article>
       <h1>Welcome to JustHTML</h1>
-      <p class=\"intro\">A <strong>pure JavaScript</strong> HTML5 parser.</p>
+      <p class="intro">A <strong>pure JavaScript</strong> HTML5 parser.</p>
       <p>It passes all 9,200+ official html5lib tests.</p>
     </article>
     <aside>
@@ -290,7 +290,7 @@
     <p>© 2024 Example</p>
   </footer>
 </body>
-</html>";
+</html>`;
 
         // Tab switching logic
         outputTabs.addEventListener('click', (event) => {
