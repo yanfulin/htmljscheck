@@ -5,6 +5,15 @@
   "main": "dist/justjshtml.cjs",
   "module": "dist/justjshtml.mjs",
   "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/justjshtml.mjs",
+      "require": "./dist/justjshtml.cjs"
+    }
+  },
   "scripts": {
     "test": "node tests/parser.test.js",
     "build": "rollup -c"
