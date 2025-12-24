@@ -2,6 +2,10 @@
 
 import { ParseError } from './errors.js';
 
+/**
+ * @enum {number}
+ * @description Represents the different states of the tokenizer.
+ */
 const State = {
   DATA: 1,
   TAG_OPEN: 2,
@@ -15,9 +19,95 @@ const State = {
   ATTRIBUTE_VALUE_SINGLE_QUOTED: 10,
   ATTRIBUTE_VALUE_UNQUOTED: 11,
   COMMENT: 12,
+  // DOCTYPE states will be added here later for full HTML5 compliance
 };
 
+/**
+ * @class Tokenizer
+ * @description Converts an HTML string into a sequence of tokens.
+ */
 export class Tokenizer {
+  /**
+   * @private
+   * @type {object}
+   * @description Options for the tokenizer, including strict mode and error collection.
+   */
+  options;
+
+  /**
+   * @private
+   * @type {State}
+   * @description The current state of the tokenizer's state machine.
+   */
+  state;
+
+  /**
+   * @private
+   * @type {string}
+   * @description A buffer used to accumulate characters for token names, attribute names, or values.
+   */
+  buffer;
+
+  /**
+   * @private
+   * @type {boolean}
+   * @description Flag indicating if the current tag being processed is an end tag.
+   */
+  is_end_tag;
+
+  /**
+   * @private
+   * @type {object|null}
+   * @description The current token being built, or `null` if no token is currently being built.
+   */
+  current_token;
+
+  /**
+   * @private
+   * @type {number}
+   * @description The current line number being processed in the HTML input.
+   */
+  line;
+
+  /**
+   * @private
+   * @type {number}
+   * @description The current column number being processed in the HTML input.
+   */
+  column;
+
+  /**
+   * @private
+   * @type {number}
+   * @description The current index in the HTML input string.
+   */
+  index;
+
+  /**
+   * @public
+   * @type {ParseError[]}
+   * @description An array of collected parsing errors if `collectErrors` option is true.
+   */
+  errors;
+
+  /**
+   * @public
+   * @type {Array<Array<any>>}
+   * @description The list of emitted tokens.
+   */
+  tokens;
+
+  /**
+   * @private
+   * @type {string}
+   * @description The full HTML string being tokenized.
+   */
+  html;
+
+  /**
+   * Creates an instance of Tokenizer.
+   * @param {object} [options={}] - Configuration options for the tokenizer.
+   */
   constructor(options = {}) {
     this.options = options;
     this.state = State.DATA;
@@ -32,6 +122,11 @@ export class Tokenizer {
     this.html = '';
   }
 
+  /**
+   * Runs the tokenizer over an HTML string to generate a sequence of tokens.
+   * @param {string} html - The HTML string to tokenize.
+   * @returns {Array<Array<any>>} An array of tokens.
+   */
   run(html) {
     this.html = html;
     for (let i = 0; i < html.length; i++) {
@@ -48,10 +143,18 @@ export class Tokenizer {
     return this.tokens;
   }
 
+  /**
+   * Emits a token by adding it to the internal tokens array.
+   * @param {Array<any>} token - The token to emit.
+   */
   emit(token) {
     this.tokens.push(token);
   }
 
+  /**
+   * Consumes a single character and transitions the tokenizer's state.
+   * @param {string} char - The character to consume.
+   */
   consume(char) {
     switch (this.state) {
       case State.DATA:
@@ -63,8 +166,13 @@ export class Tokenizer {
         break;
       case State.TAG_OPEN:
         if (char === '!') {
-          this.state = State.COMMENT;
-          this.buffer = char; // Store '!'.
+          if (this.html.substring(this.index, this.index + 2) === '--') { // Check for '!--'
+            this.state = State.COMMENT;
+            this.buffer = ''; // Clear buffer for comment content
+            // Consume the '!--' part in the next few iterations
+          } else {
+            this.error("Unexpected character in tag open state after !");
+          }
         } else if (/[a-zA-Z]/.test(char)) {
           this.current_token = { type: 'start_tag', tag: char.toLowerCase(), attributes: {} };
           this.state = State.TAG_NAME;
@@ -160,7 +268,7 @@ export class Tokenizer {
       case State.COMMENT:
         this.buffer += char;
         if (this.buffer.endsWith('-->')) {
-          this.emit(['Comment', this.buffer.slice(3, -3)]);
+          this.emit(['Comment', this.buffer.slice(0, -3)]);
           this.buffer = '';
           this.state = State.DATA;
         }
@@ -171,6 +279,10 @@ export class Tokenizer {
     }
   }
 
+  /**
+   * Emits the current token being built and resets `current_token`.
+   * @private
+   */
   emit_current_token() {
     if(!this.current_token) return;
     if (this.current_token.type === 'start_tag') {
@@ -181,6 +293,11 @@ export class Tokenizer {
     this.current_token = null;
   }
 
+  /**
+   * Records a parsing error. If `strict` mode is enabled, it throws the error.
+   * If `collectErrors` is enabled, it adds the error to the `errors` array.
+   * @param {string} message - The error message.
+   */
   error(message) {
     const error = new ParseError(message, this.line, this.column, this.index);
     if (this.options.strict) {
