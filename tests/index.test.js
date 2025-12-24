@@ -65,6 +65,16 @@ function testToText() {
   console.log('testToText passed!');
 }
 
+function testQuery() {
+  const html = '<div><p>Hello</p><p>World</p></div>';
+  const doc = parseHTML(html);
+  const paragraphs = doc.query('p');
+  assert.strictEqual(paragraphs.length, 2);
+  assert.strictEqual(paragraphs[0].toText(), 'Hello');
+  assert.strictEqual(paragraphs[1].toText(), 'World');
+  console.log('testQuery passed!');
+}
+
 
 testParseText();
 testParseStartTag();
@@ -73,3 +83,4 @@ testParseAttribute();
 testParseMultipleAttributes();
 testToHTML();
 testToText();
+testQuery();

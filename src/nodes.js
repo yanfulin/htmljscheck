@@ -16,6 +16,14 @@ export class Node {
   toText(options = { separator: ' ' }) {
     return this.children.map(child => child.toText(options)).join('');
   }
+
+  query(selector) {
+    let results = [];
+    for (const child of this.children) {
+      results = results.concat(child.query(selector));
+    }
+    return results;
+  }
 }
 
 export class DocumentNode extends Node {
@@ -44,6 +52,21 @@ export class ElementNode extends Node {
     }
     return `<${this.tag}>${childrenHTML}</${this.tag}>`;
   }
+
+  toText(options = { separator: ' ' }) {
+    return this.children.map(child => child.toText(options)).join('');
+  }
+
+  query(selector) {
+    let results = [];
+    if (this.tag === selector) {
+      results.push(this);
+    }
+    for (const child of this.children) {
+      results = results.concat(child.query(selector));
+    }
+    return results;
+  }
 }
 
 export class TextNode extends Node {
@@ -59,6 +82,10 @@ export class TextNode extends Node {
   toText(options) {
     return this.text;
   }
+
+  query(selector) {
+    return [];
+  }
 }
 
 export class CommentNode extends Node {
@@ -73,6 +100,10 @@ export class CommentNode extends Node {
 
   toText(options) {
     return '';
+  }
+
+  query(selector) {
+    return [];
   }
 }
 
@@ -96,5 +127,9 @@ export class DoctypeNode extends Node {
 
   toText(options) {
     return '';
+  }
+
+  query(selector) {
+    return [];
   }
 }

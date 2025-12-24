@@ -21,5 +21,6 @@ export function parseHTML(html, options = {}) {
     errors: [],
     toHTML: (options) => treeBuilder.document.toHTML(options),
     toText: (options) => treeBuilder.document.toText(options),
+    query: (selector) => treeBuilder.document.query(selector),
   };
 }
