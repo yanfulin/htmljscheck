@@ -210,7 +210,7 @@ This project will be implemented in phases.
 -   [x] Write JSDoc comments for all public APIs.
 -   [x] Create a `README.md` file with installation and usage instructions.
 -   [x] Set up a build process for distribution.
--   [ ] Configure `package.json` for publishing.
+-   [x] Configure `package.json` for publishing.
 -   [ ] Publish the package to npm.
 
 ## 8. Example Usage
