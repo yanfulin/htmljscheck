@@ -208,7 +208,7 @@ This project will be implemented in phases.
 ### Phase 4: Documentation and Release
 
 -   [x] Write JSDoc comments for all public APIs.
--   [ ] Create a `README.md` file with installation and usage instructions.
+-   [x] Create a `README.md` file with installation and usage instructions.
 -   [ ] Set up a build process for distribution.
 -   [ ] Configure `package.json` for publishing.
 -   [ ] Publish the package to npm.
