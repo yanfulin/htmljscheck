@@ -1,5 +1,7 @@
 // src/tokenizer.js
 
+import { ParseError } from './errors.js';
+
 const State = {
   DATA: 1,
   TAG_OPEN: 2,
@@ -15,20 +17,30 @@ const State = {
 };
 
 export class Tokenizer {
-  constructor(treeBuilder, options = {}, collectErrors = false) {
+  constructor(treeBuilder, options = {}) {
     this.treeBuilder = treeBuilder;
     this.options = options;
-    this.collectErrors = collectErrors;
     this.state = State.DATA;
     this.buffer = '';
     this.is_end_tag = false;
     this.current_token = null;
+    this.line = 1;
+    this.column = 1;
+    this.index = 0;
+    this.errors = [];
   }
 
   run(html) {
     for (let i = 0; i < html.length; i++) {
       const char = html[i];
       this.consume(char);
+      this.index++;
+      if (char === '\n') {
+        this.line++;
+        this.column = 1;
+      } else {
+        this.column++;
+      }
     }
   }
 
@@ -49,7 +61,7 @@ export class Tokenizer {
         } else if (char === '/') {
           this.state = State.END_TAG_OPEN;
         } else {
-          // handle other cases later
+          this.error("Unexpected character in tag open state");
         }
         break;
       case State.END_TAG_OPEN:
@@ -58,7 +70,7 @@ export class Tokenizer {
           this.state = State.TAG_NAME;
           this.is_end_tag = true;
         } else {
-          // handle other cases later
+          this.error("Unexpected character in end tag open state");
         }
         break;
       case State.TAG_NAME:
@@ -71,7 +83,7 @@ export class Tokenizer {
         } else if (/[a-zA-Z]/.test(char)) {
           this.current_token.tag += char.toLowerCase();
         } else {
-          // handle other cases later
+          this.error("Unexpected character in tag name state");
         }
         break;
       case State.BEFORE_ATTRIBUTE_NAME:
@@ -86,7 +98,7 @@ export class Tokenizer {
           this.current_token = null;
           this.state = State.DATA;
         } else {
-          // handle other cases later
+          this.error("Unexpected character in before attribute name state");
         }
         break;
       case State.ATTRIBUTE_NAME:
@@ -97,7 +109,7 @@ export class Tokenizer {
           delete this.current_token.attributes[this.buffer];
           this.buffer += char.toLowerCase();
         } else {
-          // handle other cases later
+          this.error("Unexpected character in attribute name state");
         }
         break;
       case State.BEFORE_ATTRIBUTE_VALUE:
@@ -109,7 +121,7 @@ export class Tokenizer {
           this.current_token.attributes[this.buffer] = char;
           this.state = State.ATTRIBUTE_VALUE_UNQUOTED;
         } else {
-          // handle other cases later
+          this.error("Unexpected character in before attribute value state");
         }
         break;
       case State.ATTRIBUTE_VALUE_DOUBLE_QUOTED:
@@ -137,8 +149,18 @@ export class Tokenizer {
         }
         break;
       default:
-        // not implemented yet
+        this.error("Unknown state");
         break;
+    }
+  }
+
+  error(message) {
+    const error = new ParseError(message, this.line, this.column, this.index);
+    if (this.options.strict) {
+      throw error;
+    }
+    if (this.options.collectErrors) {
+      this.errors.push(error);
     }
   }
 }

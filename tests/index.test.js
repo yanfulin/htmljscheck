@@ -1,6 +1,7 @@
 // tests/index.test.js
 
 import { parseHTML } from '../src/index.js';
+import { ParseError } from '../src/errors.js';
 import assert from 'assert';
 
 function testParseText() {
@@ -93,6 +94,16 @@ function testQueryId() {
   console.log('testQueryId passed!');
 }
 
+function testErrorHandling() {
+  const html = '<p<>';
+  assert.throws(() => parseHTML(html, { strict: true }), ParseError);
+  const doc = parseHTML(html, { collectErrors: true });
+  assert.strictEqual(doc.errors.length, 1);
+  assert.strictEqual(doc.errors[0].line, 1);
+  assert.strictEqual(doc.errors[0].column, 3);
+  console.log('testErrorHandling passed!');
+}
+
 
 testParseText();
 testParseStartTag();
@@ -104,3 +115,4 @@ testToText();
 testQuery();
 testQueryClass();
 testQueryId();
+testErrorHandling();

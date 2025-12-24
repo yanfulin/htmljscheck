@@ -12,13 +12,13 @@ import { TreeBuilder } from './tree-builder.js';
  */
 export function parseHTML(html, options = {}) {
   const treeBuilder = new TreeBuilder();
-  const tokenizer = new Tokenizer(treeBuilder);
+  const tokenizer = new Tokenizer(treeBuilder, options);
 
   tokenizer.run(html);
 
   return {
     root: treeBuilder.document,
-    errors: [],
+    errors: tokenizer.errors,
     toHTML: (options) => treeBuilder.document.toHTML(options),
     toText: (options) => treeBuilder.document.toText(options),
     query: (selector) => treeBuilder.document.query(selector),
