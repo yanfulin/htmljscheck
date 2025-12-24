@@ -54,8 +54,8 @@ export class Node {
    * @param {number} [options.indentSize=2] - The number of spaces to use for each level of indentation.
    * @returns {string} The HTML string representation of the node.
    */
-  toHTML(options = { pretty: true, indentSize: 2 }) {
-    return this.children.map(child => child.toHTML(options)).join('');
+  toHTML(options = { pretty: true, indentSize: 2 }, indentLevel = 0) {
+    return this.children.map(child => child.toHTML(options, indentLevel)).join('');
   }
 
   /**
@@ -73,14 +73,271 @@ export class Node {
    * @param {string} selector - The CSS selector to use.
    * @returns {Array<ElementNode>} An array of matching ElementNodes.
    */
-  query(selector) {
-    let results = [];
-    for (const child of this.children) {
-      results = results.concat(child.query(selector));
+        query(selector) {
+          const allResults = new Set();
+          const individualSelectors = selector.split(',').map(s => s.trim()).filter(Boolean);
+      
+          for (const individualSelector of individualSelectors) {
+            // Example: "div > p.intro" -> [ { type: 'selector', value: 'div' }, { type: 'combinator', value: '>' }, { type: 'selector', value: 'p.intro' } ]
+            const parsedSelectorParts = [];
+            // This regex splits by '>', ' ' while keeping the delimiters and also handles multiple spaces
+            const parts = individualSelector.split(/(\s*>\s*|\s+)/).map(s => s.trim()).filter(Boolean);
+      
+            for (let i = 0; i < parts.length; i++) {
+              const part = parts[i];
+              if (part === '>') {
+                parsedSelectorParts.push({ type: 'combinator', value: '>' });
+              } else if (part === '') { // This can happen with multiple spaces or leading/trailing spaces
+                  continue; // Skip empty parts
+              }
+               else if (i > 0 && parsedSelectorParts[parsedSelectorParts.length - 1].type === 'selector' && part !== '>') {
+                // If the previous was a selector and current is not '>' and not a combinator, it's an implicit descendant
+                parsedSelectorParts.push({ type: 'combinator', value: ' ' });
+                parsedSelectorParts.push({ type: 'selector', value: part });
+              }
+              else {
+                parsedSelectorParts.push({ type: 'selector', value: part });
+              }
+            }
+      
+            Node._findAllMatches(this, parsedSelectorParts, 0, [], allResults);
+          }
+          return Array.from(allResults);
+        }
+      
+        /**
+         * Recursive helper to find all nodes matching a parsed selector.
+         * @param {Node} currentNode - The current node to start searching from.
+         * @param {Array<object>} selectorParts - The parsed selector parts.
+         * @param {number} partIndex - The current index in selectorParts to match.
+         * @param {Array<ElementNode>} currentMatchChain - Nodes that have matched so far in the current path.
+         * @param {Set<ElementNode>} resultsSet - The set to accumulate unique matching ElementNodes.
+         */
+        static _findAllMatches(currentNode, selectorParts, partIndex, currentMatchChain, resultsSet) {
+          if (!currentNode || partIndex >= selectorParts.length) {
+            return;
+          }
+      
+          const currentSelectorPart = selectorParts[partIndex];
+      
+          if (currentSelectorPart.type === 'combinator') {
+              // Combinator at the start of a selector should be handled by the initial call to _findAllMatches
+              // or by a previous selector part that leads to descendants.
+              // If we arrive here, it means we are trying to process a combinator.
+              // We should move to the next selector part.
+              if (currentMatchChain.length === 0) {
+                  // This case implies a malformed selector or an initial call on a combinator, skip it.
+                  Node._findAllMatches(currentNode, selectorParts, partIndex + 1, currentMatchChain, resultsSet);
+                  return;
+              }
+      
+              const prevMatchedNode = currentMatchChain[currentMatchChain.length - 1];
+              if (!prevMatchedNode) return; // Should not happen
+      
+              if (currentSelectorPart.value === '>') { // Direct child combinator
+                  for (const child of prevMatchedNode.children) {
+                      if (child instanceof ElementNode) {
+                          Node._findAllMatches(child, selectorParts, partIndex + 1, [...currentMatchChain, child], resultsSet);
+                      }
+                  }
+              } else if (currentSelectorPart.value === ' ') { // Descendant combinator
+                  // For descendant, we need to check all descendants of the prevMatchedNode
+                  Node._findDescendantsAndMatch(prevMatchedNode, selectorParts, partIndex + 1, currentMatchChain, resultsSet);
+              }
+              return; // Combinator processed
+          }
+      
+          // Attempt to match the current node with the current selector part (if it's a 'selector' type part)
+          if (currentNode instanceof ElementNode && currentSelectorPart.type === 'selector' && Node._matchNode(currentNode, currentSelectorPart.value)) {
+              const newMatchChain = [...currentMatchChain, currentNode];
+      
+              if (partIndex === selectorParts.length - 1) { // This is the last selector part and it matches
+                  resultsSet.add(currentNode);
+              } else {
+                  // It matches, but there are more parts. Move to the next.
+                  Node._findAllMatches(currentNode, selectorParts, partIndex + 1, newMatchChain, resultsSet);
+              }
+          }
+      
+          // Always continue searching in children for the *current* selector part or the next.
+          // This is crucial for descendant behavior or to find the initial match.
+          for (const child of currentNode.children) {
+            if (child instanceof ElementNode || child instanceof DocumentNode) {
+              // If the current part is a selector AND we are at the beginning of the search for this part,
+              // OR if the previous part was a descendant combinator,
+              // we try to match the current selector part on the child.
+              if (currentSelectorPart.type === 'selector' && (partIndex === 0 || (partIndex > 0 && selectorParts[partIndex - 1].value === ' '))) {
+                  Node._findAllMatches(child, selectorParts, partIndex, currentMatchChain, resultsSet);
+              }
+            }
+          }
+        }
+      
+        /**
+         * Helper for descendant combinator: finds all descendants from startNode and tries to match.
+         * This is called when a ' ' combinator is encountered.
+         * @param {Node} startNode - The node from which to find descendants.
+         * @param {Array<object>} selectorParts - The parsed selector parts.
+         * @param {number} partIndex - The current index in selectorParts to match.
+         * @param {Array<ElementNode>} currentMatchChain - Nodes that have matched so far.
+         * @param {Set<ElementNode>} resultsSet - The set to accumulate unique matching ElementNodes.
+         */
+        static _findDescendantsAndMatch(startNode, selectorParts, partIndex, currentMatchChain, resultsSet) {
+          if (!startNode) {
+            return;
+          }
+          for (const child of startNode.children) {
+              if (child instanceof ElementNode || child instanceof DocumentNode) {
+                  // Try to match the next selector part directly on the child
+                  Node._findAllMatches(child, selectorParts, partIndex, [...currentMatchChain, child], resultsSet);
+                  // Also recursively search descendants of the child
+                  Node._findDescendantsAndMatch(child, selectorParts, partIndex, currentMatchChain, resultsSet);
+              }
+          }
+        }
+          /**
+     * Helper method to check if an ElementNode matches a single simple selector part.
+     * @param {ElementNode} node - The element node to check.
+     * @param {string} simpleSelectorPart - The simple selector string (e.g., 'div', '#id', '.class').
+     * @returns {boolean} - True if the node matches the simple selector, false otherwise.
+     */
+      _matchesSimpleSelector(node, simpleSelectorPart) {
+        if (!(node instanceof ElementNode)) {
+            return false;
+        }
+    
+        if (simpleSelectorPart.startsWith('#')) { // ID selector
+            return node.attributes.id === simpleSelectorPart.substring(1);
+        } else if (simpleSelectorPart.startsWith('.')) { // Class selector
+            return node.attributes.class && node.attributes.class.split(' ').includes(simpleSelectorPart.substring(1));
+        } else { // Tag name selector
+            return node.tag === simpleSelectorPart;
+        }
+      }
+    
+      /**
+       * Helper method to check if an ElementNode matches a complex selector part
+       * (e.g., 'div#id.class').
+       * @param {ElementNode} node - The element node to check.
+       * @param {string} selectorPart - The complex selector part string.
+       * @returns {boolean} - True if the node matches, false otherwise.
+       */
+      static _matchNode(node, selectorPart) {
+        if (!(node instanceof ElementNode)) {
+          return false;
+        }
+    
+        // Regex to extract tag, id, and classes
+        const match = selectorPart.match(/^(?:(\w+))?(?:#([\w-]+))?(?:\.([\w.-]+))?$/);
+        if (!match) {
+          return false; // Malformed selector part
+        }
+    
+        const [, tag, id, classes] = match;
+    
+        if (tag && node.tag.toLowerCase() !== tag.toLowerCase()) { // Case-insensitive tag matching
+          return false;
+        }
+        if (id && node.attributes.id !== id) {
+          return false;
+        }
+        if (classes) {
+          const nodeClasses = node.attributes.class ? node.attributes.class.split(' ') : [];
+          const requiredClasses = classes.split('.');
+          for (const cls of requiredClasses) {
+            if (!nodeClasses.includes(cls)) {
+              return false;
+            }
+          }
+        }
+        return true;
+      }
+
+  /**
+   * Recursive helper to find all nodes matching a parsed selector.
+   * @param {Node} startNode - The current node to start searching from.
+   * @param {Array<object>} selectorParts - The parsed selector parts.
+   * @param {number} partIndex - The current index in selectorParts to match.
+   * @param {Set<ElementNode>} resultsSet - The set to accumulate unique matching ElementNodes.
+   */
+  static _findAllMatches(startNode, selectorParts, partIndex, resultsSet) {
+    if (!startNode || partIndex >= selectorParts.length) {
+      return;
     }
-    return results;
+
+    const currentSelectorPart = selectorParts[partIndex];
+
+    // If the current part is a combinator, it means the previous selector part has been matched
+    // and we need to determine the search scope for the *next* selector part.
+    if (currentSelectorPart.type === 'combinator') {
+        const combinator = currentSelectorPart.value;
+        const nextSelectorPartIndex = partIndex + 1;
+
+        if (combinator === '>') { // Direct child combinator
+            for (const child of startNode.children) {
+                if (child instanceof ElementNode) {
+                    Node._findAllMatches(child, selectorParts, nextSelectorPartIndex, resultsSet);
+                }
+            }
+        } else if (combinator === ' ') { // Descendant combinator
+            Node._findDescendantsAndMatch(startNode, selectorParts, nextSelectorPartIndex, resultsSet);
+        }
+        return; // Combinator processed, move to next
+    }
+
+    // Attempt to match the current node with the current selector part (if it's a 'selector' type part)
+    if (startNode instanceof ElementNode && Node._matchNode(startNode, currentSelectorPart.value)) {
+        if (partIndex === selectorParts.length - 1) { // It's the last selector part and it matches
+            resultsSet.add(startNode);
+        } else {
+            // It matches, but there are more parts (possibly a combinator next)
+            // Continue search from children of the current matching node, looking for the next part
+            for (const child of startNode.children) {
+                 Node._findAllMatches(child, selectorParts, partIndex + 1, resultsSet);
+            }
+        }
+    }
+
+    // Always continue searching in children for the *current* selector part (descendant behavior).
+    // This is for finding the initial match of a selector or for implicit descendant combinators.
+    // If the current part is a selector, we need to apply it to all descendants unless a combinator
+    // explicitly limits the scope.
+    if (currentSelectorPart.type === 'selector') {
+        for (const child of startNode.children) {
+            // Only if it's the beginning of the search, or if the previous combinator was ' '
+            // This is the core of how descendant selectors work.
+            // We pass the same partIndex, meaning we're still trying to match this selector part.
+            // We need to avoid infinite loops if 'startNode' is DocumentNode and it's trying to match 'html'
+            if (startNode === child.parent) { // Only traverse direct children
+                Node._findAllMatches(child, selectorParts, partIndex, resultsSet);
+            }
+        }
+    }
   }
-}
+
+  /**
+   * Helper for descendant combinator: finds all descendants from startNode and tries to match.
+   * This is called when a ' ' combinator is encountered.
+   * @param {Node} startNode - The node from which to find descendants.
+   * @param {Array<object>} selectorParts - The parsed selector parts.
+   * @param {number} partIndex - The current index in selectorParts to match.
+   * @param {Set<ElementNode>} resultsSet - The set to accumulate unique matching ElementNodes.
+   */
+  static _findDescendantsAndMatch(startNode, selectorParts, partIndex, resultsSet) {
+    if (!startNode) {
+      return;
+    }
+    for (const child of startNode.children) {
+        if (child instanceof ElementNode || child instanceof DocumentNode) {
+            // Try to match the next selector part on the current child
+            Node._findAllMatches(child, selectorParts, partIndex, resultsSet);
+            // Also recursively search descendants of the child for the same selector part
+            Node._findDescendantsAndMatch(child, selectorParts, partIndex, resultsSet);
+        }
+    }
+  }
+    
+  }
 
 /**
  * @class DocumentNode
@@ -90,6 +347,26 @@ export class Node {
 export class DocumentNode extends Node {
   constructor() {
     super('document');
+  }
+
+  /**
+   * Serializes the document and its children to an HTML string.
+   * @param {object} [options={}] - Serialization options.
+   * @param {boolean} [options.pretty=true] - Whether to pretty-print the HTML.
+   * @param {number} [options.indentSize=2] - The number of spaces to use for each level of indentation.
+   * @returns {string} The HTML string representation of the document.
+   */
+  toHTML(options = { pretty: true, indentSize: 2 }, indentLevel = 0) {
+    let htmlString = '';
+    for (const child of this.children) {
+      const childHtml = child.toHTML(options, indentLevel);
+      if (child.type === 'doctype' && options.pretty && childHtml) {
+        htmlString += childHtml + '\n';
+      } else {
+        htmlString += childHtml;
+      }
+    }
+    return htmlString;
   }
 
   /**
@@ -150,13 +427,32 @@ export class ElementNode extends Node {
    * @param {number} [options.indentSize=2] - The number of spaces to use for each level of indentation.
    * @returns {string} The HTML string representation of the element.
    */
-  toHTML(options = { pretty: true, indentSize: 2 }) {
-    const attrs = Object.entries(this.attributes).map(([key, value]) => `${key}="${value}"`).join(' ');
-    const childrenHTML = this.children.map(child => child.toHTML(options)).join('');
-    if (attrs) {
-      return `<${this.tag} ${attrs}>${childrenHTML}</${this.tag}>`;
+  toHTML(options = { pretty: true, indentSize: 2 }, indentLevel = 0) {
+    const indent = options.pretty ? ' '.repeat(indentLevel * options.indentSize) : '';
+    const newline = options.pretty ? '\n' : '';
+
+    const attrs = Object.entries(this.attributes)
+      .map(([key, value]) => `${key}="${value}"`)
+      .join(' ');
+    const tagAttrs = attrs ? ` ${attrs}` : '';
+
+    let childrenHTML = this.children
+      .map(child => child.toHTML(options, indentLevel + 1))
+      .join('');
+
+    // If childrenHTML is not empty and pretty printing is enabled, add newlines and indentation around it
+    if (options.pretty && this.children.length > 0) {
+        // Only add a newline before the first child's content if there are children,
+        // and a newline before the closing tag if there are children.
+        childrenHTML = newline + childrenHTML + newline + indent;
     }
-    return `<${this.tag}>${childrenHTML}</${this.tag}>`;
+
+    if (this.children.length > 0) {
+        return `${indent}<${this.tag}${tagAttrs}>${childrenHTML}</${this.tag}>`;
+    } else {
+        // Empty elements without children, e.g., <div></div> or <br/> (though <br> is typically self-closing)
+        return `${indent}<${this.tag}${tagAttrs}></${this.tag}>`;
+    }
   }
 
   /**
@@ -169,36 +465,7 @@ export class ElementNode extends Node {
     return this.children.map(child => child.toText(options)).join('');
   }
 
-  /**
-   * Queries the element and its children using a CSS selector.
-   * @param {string} selector - The CSS selector to use.
-   * @returns {Array<ElementNode>} An array of matching ElementNodes.
-   */
-  query(selector) {
-    let results = [];
-    let match = false;
-    if (selector.startsWith('.')) {
-      if (this.attributes.class && this.attributes.class.split(' ').includes(selector.substring(1))) {
-        match = true;
-      }
-    } else if (selector.startsWith('#')) {
-      if (this.attributes.id === selector.substring(1)) {
-        match = true;
-      }
-    } else if (this.tag === selector) {
-      match = true;
-    }
-
-    if (match) {
-      results.push(this);
-    }
-
-    for (const child of this.children) {
-      results = results.concat(child.query(selector));
-    }
-    return results;
   }
-}
 
 /**
  * @class TextNode
