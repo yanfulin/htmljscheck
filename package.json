@@ -2,15 +2,22 @@
   "name": "justjshtml",
   "version": "0.0.1",
   "description": "A JavaScript port of the justhtml library.",
-  "main": "src/index.js",
+  "main": "dist/justjshtml.cjs",
+  "module": "dist/justjshtml.mjs",
   "type": "module",
   "scripts": {
-    "test": "node tests/index.test.js"
+    "test": "node tests/parser.test.js",
+    "build": "rollup -c"
   },
   "keywords": [
     "html",
     "parser"
   ],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^26.0.1",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "rollup": "^4.19.0"
+  }
 }
