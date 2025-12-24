@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>justjshtml Playground</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            margin: 0;
+            padding: 20px;
+            background-color: #f6f8fa;
+            color: #24292e;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #0366d6;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            flex: 1;
+        }
+
+        .panel {
+            background-color: #fff;
+            border: 1px solid #d1d5da;
+            border-radius: 6px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(27,31,35,.04);
+            flex: 1;
+            min-width: 450px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            font-weight: 600;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            border-bottom: 1px solid #e1e4e8;
+            padding-bottom: 10px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        textarea {
+            width: 100%;
+            height: 250px;
+            padding: 10px;
+            border: 1px solid #d1d5da;
+            border-radius: 3px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .options-grid label {
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+        }
+
+        .options-grid input[type="checkbox"] {
+            margin-right: 5px;
+        }
+
+        button {
+            background-color: #28a745;
+            color: white;
+            border: 1px solid rgba(27,31,35,.15);
+            border-radius: 6px;
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #22863a;
+        }
+
+        .output-tabs {
+            display: flex;
+            margin-top: 15px;
+            border-bottom: 1px solid #e1e4e8;
+        }
+
+        .output-tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            border-radius: 6px 6px 0 0;
+            margin-bottom: -1px; /* Overlap with border-bottom */
+            font-weight: 600;
+            color: #586069;
+        }
+
+        .output-tab.active {
+            background-color: #fff;
+            border-color: #e1e4e8;
+            border-bottom-color: #fff;
+            color: #24292e;
+        }
+
+        .output-content {
+            flex: 1;
+            background-color: #f6f8fa;
+            border: 1px solid #d1d5da;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            padding: 15px;
+            overflow-x: auto;
+        }
+
+        .output-content pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            font-size: 14px;
+        }
+
+        .output-content > div {
+            display: none;
+            height: 100%;
+        }
+
+        .output-content > div.active {
+            display: block;
+        }
+
+        .error-message {
+            color: #cb2431;
+            white-space: pre-wrap;
+        }
+
+        .css-selector-input {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            align-items: flex-end;
+        }
+
+        .css-selector-input input[type="text"] {
+            flex: 1;
+            padding: 8px 10px;
+            border: 1px solid #d1d5da;
+            border-radius: 3px;
+            font-size: 14px;
+            box-sizing: border-box;
+            height: 38px; /* Match button height */
+        }
+
+        .css-selector-input button {
+            margin-top: 0;
+            height: 38px;
+            line-height: 1;
+            padding: 0 15px;
+        }
+
+        .css-selector-results pre {
+            background-color: #e6eff7;
+            border: 1px solid #c7d8ed;
+            border-radius: 3px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>justjshtml Playground</h1>
+
+    <div class="container">
+        <div class="panel input-panel">
+            <div class="panel-header">HTML Input</div>
+            <textarea id="htmlInput" placeholder="Paste your HTML here..."></textarea>
+
+            <div class="options-grid">
+                <label><input type="checkbox" id="prettyPrint" checked> Pretty Print HTML</label>
+                <label><input type="checkbox" id="collectErrors"> Collect Errors</label>
+                <label><input type="checkbox" id="strictMode"> Strict Mode</label>
+            </div>
+
+            <button id="parseButton">Parse HTML</button>
+        </div>
+
+        <div class="panel output-panel">
+            <div class="panel-header">Output</div>
+
+            <div class="output-tabs">
+                <div class="output-tab active" data-target="parsedHtmlOutput">Parsed HTML</div>
+                <div class="output-tab" data-target="astOutput">AST</div>
+                <div class="output-tab" data-target="errorsOutput">Errors</div>
+                <div class="output-tab" data-target="textContentOutput">Text Content</div>
+            </div>
+
+            <div class="output-content">
+                <div id="parsedHtmlOutput" class="active"><pre></pre></div>
+                <div id="astOutput"><pre></pre></div>
+                <div id="errorsOutput"><pre class="error-message"></pre></div>
+                <div id="textContentOutput"><pre></pre></div>
+            </div>
+
+            <div class="css-selector-section">
+                <div class="panel-header" style="margin-top: 20px;">CSS Selector Query</div>
+                <div class="css-selector-input">
+                    <input type="text" id="cssSelector" placeholder="e.g., a, p.intro, nav > ul > li">
+                    <button id="runQueryButton">Run Query</button>
+                </div>
+                <div class="css-selector-results">
+                    <pre id="selectorResults"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { parseHTML } from './justjshtml.mjs';
+
+        const htmlInput = document.getElementById('htmlInput');
+        const prettyPrintCheckbox = document.getElementById('prettyPrint');
+        const collectErrorsCheckbox = document.getElementById('collectErrors');
+        const strictModeCheckbox = document.getElementById('strictMode');
+        const parseButton = document.getElementById('parseButton');
+        const outputTabs = document.querySelector('.output-tabs');
+        const parsedHtmlOutput = document.querySelector('#parsedHtmlOutput pre');
+        const astOutput = document.querySelector('#astOutput pre');
+        const errorsOutput = document.querySelector('#errorsOutput pre');
+        const textContentOutput = document.querySelector('#textContentOutput pre');
+        const cssSelectorInput = document.getElementById('cssSelector');
+        const runQueryButton = document.getElementById('runQueryButton');
+        const selectorResults = document.getElementById('selectorResults');
+
+        let currentDocument = null; // To store the parsed document for selector queries
+
+        // Example HTML
+        htmlInput.value = "<!DOCTYPE html>
+<html>
+<head>
+  <title>Example Page</title>
+</head>
+<body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href=\"/\" class=\"active\">Home</a></li>
+        <li><a href=\"/about\">About</a></li>
+        <li><a href=\"/contact\">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main>
+    <article>
+      <h1>Welcome to JustHTML</h1>
+      <p class=\"intro\">A <strong>pure JavaScript</strong> HTML5 parser.</p>
+      <p>It passes all 9,200+ official html5lib tests.</p>
+    </article>
+    <aside>
+      <h2>Features</h2>
+      <ul>
+        <li>CSS Selectors</li>
+        <li>Tree Traversal</li>
+        <li>Pretty Printing</li>
+      </ul>
+    </aside>
+  </main>
+  <footer>
+    <p>© 2024 Example</p>
+  </footer>
+</body>
+</html>";
+
+        // Tab switching logic
+        outputTabs.addEventListener('click', (event) => {
+            if (event.target.classList.contains('output-tab')) {
+                // Deactivate current active tab and content
+                outputTabs.querySelector('.output-tab.active').classList.remove('active');
+                document.querySelector('.output-content > div.active').classList.remove('active');
+
+                // Activate new tab and content
+                event.target.classList.add('active');
+                document.getElementById(event.target.dataset.target).classList.add('active');
+            }
+        });
+
+        // Parse HTML function
+        function parseAndDisplay() {
+            const html = htmlInput.value;
+            const options = {
+                collectErrors: collectErrorsCheckbox.checked,
+                strict: strictModeCheckbox.checked,
+            };
+
+            try {
+                const doc = parseHTML(html, options);
+                currentDocument = doc; // Store for CSS selector queries
+
+                // Display Parsed HTML
+                parsedHtmlOutput.textContent = doc.toHTML({ pretty: prettyPrintCheckbox.checked });
+
+                // Display AST
+                astOutput.textContent = JSON.stringify(doc.root, null, 2);
+
+                // Display Text Content
+                textContentOutput.textContent = doc.toText();
+
+                // Display Errors
+                if (doc.errors && doc.errors.length > 0) {
+                    errorsOutput.textContent = doc.errors.map(err => `Error at ${err.line}:${err.column}: ${err.message}`).join('\n');
+                } else {
+                    errorsOutput.textContent = 'No errors.';
+                }
+                errorsOutput.style.color = doc.errors && doc.errors.length > 0 ? '#cb2431' : '#28a745';
+
+            } catch (e) {
+                // Handle ParseError in strict mode
+                if (e.name === 'ParseError') { // Assuming ParseError has a name property
+                    errorsOutput.textContent = `Strict Mode Error: ${e.message} at ${e.line}:${e.column}`;
+                    errorsOutput.style.color = '#cb2431';
+                    parsedHtmlOutput.textContent = '';
+                    astOutput.textContent = '';
+                    textContentOutput.textContent = '';
+                } else {
+                    // General JavaScript errors
+                    errorsOutput.textContent = `An unexpected error occurred: ${e.message}\n${e.stack}`;
+                    errorsOutput.style.color = '#cb2431';
+                }
+                errorsOutput.classList.add('active');
+                document.querySelector('.output-tabs .output-tab.active').classList.remove('active');
+                document.querySelector('.output-tabs [data-target="errorsOutput"]').classList.add('active');
+
+                parsedHtmlOutput.textContent = '';
+                astOutput.textContent = '';
+                textContentOutput.textContent = '';
+                currentDocument = null;
+            }
+            selectorResults.textContent = ''; // Clear previous selector results
+        }
+
+        // CSS Selector Query function
+        function runCssQuery() {
+            if (!currentDocument) {
+                selectorResults.textContent = 'Please parse HTML first.';
+                selectorResults.style.color = '#cb2431';
+                return;
+            }
+            const selector = cssSelectorInput.value.trim();
+            if (!selector) {
+                selectorResults.textContent = 'Please enter a CSS selector.';
+                selectorResults.style.color = '#cb2431';
+                return;
+            }
+
+            try {
+                const elements = currentDocument.query(selector); // Assuming query method exists
+                if (elements && elements.length > 0) {
+                    selectorResults.textContent = elements.map(el => `<${el.tag}> (Index: ${el.startIndex})`).join('\n');
+                    selectorResults.style.color = '#24292e';
+                } else {
+                    selectorResults.textContent = `No elements found matching "${selector}".`;
+                    selectorResults.style.color = '#586069';
+                }
+            } catch (e) {
+                selectorResults.textContent = `CSS Selector Error: ${e.message}`;
+                selectorResults.style.color = '#cb2431';
+            }
+        }
+
+        // Event Listeners
+        parseButton.addEventListener('click', parseAndDisplay);
+        runQueryButton.addEventListener('click', runCssQuery);
+
+        // Initial parse on page load
+        parseAndDisplay();
+
+    </script>
+</body>
+</html>
