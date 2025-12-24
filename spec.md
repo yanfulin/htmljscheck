@@ -191,7 +191,7 @@ This project will be implemented in phases.
 
 ### Phase 2: API Completeness
 
--   [ ] Implement a CSS selector engine for the `query` method.
+-   [~] Implement a CSS selector engine for the `query` method.
 -   [x] Implement the `toHTML` method for serializing the DOM tree.
 -   [x] Implement the `toText` method for serializing the DOM tree to text.
 -   [ ] Implement the `ParseError` class.
