@@ -200,6 +200,7 @@ This project will be implemented in phases.
 ### Phase 3: Testing and Compliance
 
 -   [x] Choose and configure a testing framework (e.g., Jest, Mocha).
+-   [x] Write a comprehensive test suite to ensure correctness.
 -   [ ] Create a script to download and run the html5lib-tests.
 -   [ ] Write a test runner to execute the html5lib-tests and compare the results.
 -   [ ] Debug and fix parsing errors until all tests pass.
@@ -208,7 +209,7 @@ This project will be implemented in phases.
 
 -   [ ] Write JSDoc comments for all public APIs.
 -   [ ] Create a `README.md` file with installation and usage instructions.
--   [ ] Set up a build process using a tool like Rollup or Webpack.
+-   [ ] Set up a build process for distribution.
 -   [ ] Configure `package.json` for publishing.
 -   [ ] Publish the package to npm.
 
