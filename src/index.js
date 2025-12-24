@@ -1,51 +1,24 @@
 // src/index.js
 
+import { Tokenizer } from './tokenizer.js';
+import { TreeBuilder } from './tree-builder.js';
+
 /**
- * Parses a simple, hardcoded HTML document and returns a simplified DOM tree.
- * This function is for the proof of concept phase and is not a full HTML parser.
+ * Parses an HTML string and returns a document object.
  *
- * @returns {object} A simplified DOM tree.
+ * @param {string} html The HTML string to parse.
+ * @param {object} options Parsing options.
+ * @returns {object} The parsed document.
  */
-export function parseSimpleHTML() {
-  const html = '<html><head><title>Test</title></head><body><p>Hello, world!</p></body></html>';
+export function parseHTML(html, options = {}) {
+  const tokenizer = new Tokenizer();
+  const treeBuilder = new TreeBuilder();
 
-  // This is a very simplistic "parser" for the proof of concept.
-  // It does not handle attributes, comments, or other complexities.
-  if (html === '<html><head><title>Test</title></head><body><p>Hello, world!</p></body></html>') {
-    return {
-      type: 'document',
-      children: [
-        {
-          type: 'element',
-          tag: 'html',
-          children: [
-            {
-              type: 'element',
-              tag: 'head',
-              children: [
-                {
-                  type: 'element',
-                  tag: 'title',
-                  children: [{ type: 'text', text: 'Test' }],
-                },
-              ],
-            },
-            {
-              type: 'element',
-              tag: 'body',
-              children: [
-                {
-                  type: 'element',
-                  tag: 'p',
-                  children: [{ type: 'text', text: 'Hello, world!' }],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-  }
+  // This is a placeholder implementation.
+  // The tokenizer and tree builder will be connected and used here.
 
-  return { type: 'document', children: [] };
+  return {
+    root: null,
+    errors: [],
+  };
 }
