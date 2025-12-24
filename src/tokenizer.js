@@ -14,8 +14,8 @@ const State = {
   ATTRIBUTE_VALUE_DOUBLE_QUOTED: 9,
   ATTRIBUTE_VALUE_SINGLE_QUOTED: 10,
   ATTRIBUTE_VALUE_UNQUOTED: 11,
-  COMMENT_START: 12,
-  COMMENT: 13,
+  COMMENT: 12,
+  MARKUP_DECLARATION_OPEN: 13,
 };
 
 export class Tokenizer {
@@ -32,6 +32,7 @@ export class Tokenizer {
     this.tokens = [];
     this.html = '';
     this.current_attribute_name = ''; // To store the attribute name while parsing its value
+    this.current_attribute_value = ''; // To store the attribute value
   }
 
   run(html) {
@@ -65,8 +66,7 @@ export class Tokenizer {
         break;
       case State.TAG_OPEN:
         if (char === '!') {
-          this.state = State.COMMENT_START;
-          this.buffer = ''; // Prepare to collect '!--'
+          this.state = State.MARKUP_DECLARATION_OPEN;
         } else if (/[a-zA-Z]/.test(char)) {
           this.current_token = { type: 'start_tag', tag: char.toLowerCase(), attributes: {} };
           this.state = State.TAG_NAME;
@@ -103,6 +103,7 @@ export class Tokenizer {
           // ignore
         } else if (/[a-zA-Z]/.test(char)) {
           this.current_attribute_name = char.toLowerCase(); // Start collecting attribute name
+          this.current_attribute_value = '';
           this.state = State.ATTRIBUTE_NAME;
         } else if (char === '>') {
           this.emit_current_token();
@@ -113,17 +114,13 @@ export class Tokenizer {
         break;
       case State.ATTRIBUTE_NAME:
         if (char === '=') {
-          this.current_token.attributes[this.current_attribute_name] = ''; // Initialize attribute value
           this.state = State.BEFORE_ATTRIBUTE_VALUE;
-        } else if (/\s/.test(char)) {
+        } else if (/\s/.test(char) || char === '>') { // Attribute name ends with space or >
           this.current_token.attributes[this.current_attribute_name] = ''; // Attribute with no value
           this.current_attribute_name = '';
+          this.current_attribute_value = '';
           this.state = State.BEFORE_ATTRIBUTE_NAME;
-        } else if (char === '>') {
-          this.current_token.attributes[this.current_attribute_name] = ''; // Attribute with no value, end of tag
-          this.current_attribute_name = '';
-          this.emit_current_token();
-          this.state = State.DATA;
+          this.consume(char); // Re-consume the char for correct state handling
         } else if (/[a-zA-Z]/.test(char)) {
           this.current_attribute_name += char.toLowerCase();
         } else {
@@ -138,7 +135,7 @@ export class Tokenizer {
         } else if (char === "'") {
           this.state = State.ATTRIBUTE_VALUE_SINGLE_QUOTED;
         } else if (/[^\s>]/.test(char)) { // Unquoted attribute value can't contain space or >
-          this.current_token.attributes[this.current_attribute_name] += char;
+          this.current_attribute_value += char;
           this.state = State.ATTRIBUTE_VALUE_UNQUOTED;
         } else {
           this.error("Unexpected character in before attribute value state");
@@ -146,45 +143,44 @@ export class Tokenizer {
         break;
       case State.ATTRIBUTE_VALUE_DOUBLE_QUOTED:
         if (char === '"') {
+          this.current_token.attributes[this.current_attribute_name] = this.current_attribute_value;
           this.current_attribute_name = ''; // Clear current attribute name
+          this.current_attribute_value = ''; // Clear current attribute value
           this.state = State.BEFORE_ATTRIBUTE_NAME;
         } else {
-          this.current_token.attributes[this.current_attribute_name] += char;
+          this.current_attribute_value += char;
         }
         break;
       case State.ATTRIBUTE_VALUE_SINGLE_QUOTED:
         if (char === "'") {
+          this.current_token.attributes[this.current_attribute_name] = this.current_attribute_value;
           this.current_attribute_name = ''; // Clear current attribute name
+          this.current_attribute_value = ''; // Clear current attribute value
           this.state = State.BEFORE_ATTRIBUTE_NAME;
         } else {
-          this.current_token.attributes[this.current_attribute_name] += char;
+          this.current_attribute_value += char;
         }
         break;
       case State.ATTRIBUTE_VALUE_UNQUOTED:
         if (/\s/.test(char) || char === '>') {
+          this.current_token.attributes[this.current_attribute_name] = this.current_attribute_value;
           this.current_attribute_name = ''; // Clear current attribute name
+          this.current_attribute_value = ''; // Clear current attribute value
           this.state = State.BEFORE_ATTRIBUTE_NAME;
           this.consume(char); // Re-consume the char for correct state handling
         } else {
-          this.current_token.attributes[this.current_attribute_name] += char;
+          this.current_attribute_value += char;
         }
         break;
-      case State.COMMENT_START:
-        this.buffer += char;
-        if (this.buffer === '--') {
-          this.state = State.COMMENT;
-          this.buffer = ''; // Clear buffer for comment content
-        } else {
-          // Not a comment, re-emit "<", "!" and buffered chars as characters
-          this.emit(['Character', '<']);
-          this.emit(['Character', '!']);
-          for (const c of this.buffer) {
-            this.emit(['Character', c]);
+      case State.MARKUP_DECLARATION_OPEN:
+          this.buffer += char;
+          if (this.buffer === '--') { // Check for '!--'
+              this.state = State.COMMENT;
+              this.buffer = ''; // Clear buffer for comment content
+          } else {
+              this.error("Unexpected character in markup declaration open state");
           }
-          this.state = State.DATA;
-          this.consume(char); // Re-consume current char
-        }
-        break;
+          break;
       case State.COMMENT:
         this.buffer += char;
         if (this.buffer.endsWith('-->')) {
