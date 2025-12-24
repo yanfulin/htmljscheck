@@ -176,9 +176,9 @@ This project will be implemented in phases.
 
 ### Phase 0: Proof of Concept
 
--   [ ] Create a `parseSimpleHTML` function that can parse a hardcoded simple HTML document.
--   [ ] The function should return a simplified DOM tree.
--   [ ] Write a single test to verify the output of `parseSimpleHTML`.
+-   [x] Create a `parseSimpleHTML` function that can parse a hardcoded simple HTML document.
+-   [x] The function should return a simplified DOM tree.
+-   [x] Write a single test to verify the output of `parseSimpleHTML`.
 
 ### Phase 1: Core Parsing Engine
 
