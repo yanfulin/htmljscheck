@@ -32,7 +32,7 @@ export class DocumentNode extends Node {
   }
 
   toText(options = { separator: ' ' }) {
-    return this.children.map(child => child.toText(options)).join('').replace(/\s+/g, ' ').trim();
+    return this.children.map(child => child.toText(options)).join(' ').replace(/\s+/g, ' ').trim();
   }
 }
 
@@ -59,9 +59,23 @@ export class ElementNode extends Node {
 
   query(selector) {
     let results = [];
-    if (this.tag === selector) {
+    let match = false;
+    if (selector.startsWith('.')) {
+      if (this.attributes.class && this.attributes.class.split(' ').includes(selector.substring(1))) {
+        match = true;
+      }
+    } else if (selector.startsWith('#')) {
+      if (this.attributes.id === selector.substring(1)) {
+        match = true;
+      }
+    } else if (this.tag === selector) {
+      match = true;
+    }
+
+    if (match) {
       results.push(this);
     }
+
     for (const child of this.children) {
       results = results.concat(child.query(selector));
     }

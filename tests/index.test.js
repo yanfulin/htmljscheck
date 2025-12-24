@@ -75,6 +75,24 @@ function testQuery() {
   console.log('testQuery passed!');
 }
 
+function testQueryClass() {
+  const html = '<div><p class="foo">Hello</p><p class="bar">World</p></div>';
+  const doc = parseHTML(html);
+  const paragraphs = doc.query('.foo');
+  assert.strictEqual(paragraphs.length, 1);
+  assert.strictEqual(paragraphs[0].toText(), 'Hello');
+  console.log('testQueryClass passed!');
+}
+
+function testQueryId() {
+  const html = '<div><p id="foo">Hello</p><p id="bar">World</p></div>';
+  const doc = parseHTML(html);
+  const paragraphs = doc.query('#foo');
+  assert.strictEqual(paragraphs.length, 1);
+  assert.strictEqual(paragraphs[0].toText(), 'Hello');
+  console.log('testQueryId passed!');
+}
+
 
 testParseText();
 testParseStartTag();
@@ -84,3 +102,5 @@ testParseMultipleAttributes();
 testToHTML();
 testToText();
 testQuery();
+testQueryClass();
+testQueryId();
