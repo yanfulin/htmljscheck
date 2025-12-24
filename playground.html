@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>justjshtml Playground</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; margin: 0; }
+        .container { display: flex; flex: 1; }
+        textarea, pre { flex: 1; margin: 10px; padding: 10px; border: 1px solid #ccc; font-family: monospace; white-space: pre-wrap; overflow-wrap: break-word; }
+        .output { flex: 1; display: flex; flex-direction: column; }
+        .output > div { flex: 1; margin: 10px; padding: 10px; border: 1px solid #ccc; font-family: monospace; white-space: pre-wrap; overflow-wrap: break-word; overflow: auto; }
+        h1, h2 { text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>justjshtml Playground</h1>
+    <div class="container">
+        <textarea id="htmlInput" spellcheck="false" placeholder="Enter HTML here..."></textarea>
+        <div class="output">
+            <h2>Output</h2>
+            <div id="domOutput"></div>
+            <div id="htmlOutput"></div>
+            <div id="textOutput"></div>
+            <div id="errorsOutput"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { parseHTML } from './src/index.js';
+
+        const htmlInput = document.getElementById('htmlInput');
+        const domOutput = document.getElementById('domOutput');
+        const htmlOutput = document.getElementById('htmlOutput');
+        const textOutput = document.getElementById('textOutput');
+        const errorsOutput = document.getElementById('errorsOutput');
+
+        function updateOutput() {
+            const html = htmlInput.value;
+            try {
+                const doc = parseHTML(html, { collectErrors: true });
+
+                domOutput.textContent = JSON.stringify(doc.root, null, 2);
+                htmlOutput.textContent = doc.toHTML({ pretty: true });
+                textOutput.textContent = doc.toText();
+
+                if (doc.errors.length > 0) {
+                    errorsOutput.textContent = 'Errors:\n' + doc.errors.map(err => `${err.message} at ${err.line}:${err.column}`).join('\n');
+                    errorsOutput.style.color = 'red';
+                } else {
+                    errorsOutput.textContent = 'No errors.';
+                    errorsOutput.style.color = 'green';
+                }
+
+            } catch (e) {
+                errorsOutput.textContent = 'Fatal Error: ' + e.message;
+                errorsOutput.style.color = 'red';
+                domOutput.textContent = '';
+                htmlOutput.textContent = '';
+                textOutput.textContent = '';
+            }
+        }
+
+        htmlInput.addEventListener('input', updateOutput);
+
+        // Initial content for demonstration
+        htmlInput.value = `<!DOCTYPE html>
+<html>
+<head>
+    <title>Sample Document</title>
+</head>
+<body>
+    <h1>Welcome!</h1>
+    <p id="first-para" class="intro">This is a <strong>sample</strong> HTML document.</p>
+    <!-- A hidden comment -->
+    <p class="intro">It demonstrates the <code>justjshtml</code> library.</p>
+</body>
+</html>`;
+        updateOutput();
+    </script>
+</body>
+</html>
