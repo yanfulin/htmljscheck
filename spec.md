@@ -194,8 +194,8 @@ This project will be implemented in phases.
 -   [x] Implement a CSS selector engine for the `query` method.
 -   [x] Implement the `toHTML` method for serializing the DOM tree.
 -   [x] Implement the `toText` method for serializing the DOM tree to text.
--   [ ] Implement the `ParseError` class.
--   [ ] Implement strict mode and error collection in the `parseHTML` function.
+-   [x] Implement the `ParseError` class.
+-   [x] Implement strict mode and error collection in the `parseHTML` function.
 
 ### Phase 3: Testing and Compliance
 
