@@ -183,11 +183,11 @@ This project will be implemented in phases.
 ### Phase 1: Core Parsing Engine
 
 -   [x] Create the project structure (`src`, `tests`, etc.).
--   [~] Implement the `Tokenizer` class.
--   [~] Implement the state machine for the tokenizer.
--   [~] Implement the `TreeBuilder` class.
+-   [x] Implement the `Tokenizer` class.
+-   [x] Implement the state machine for the tokenizer.
+-   [x] Implement the `TreeBuilder` class.
 -   [x] Implement the DOM node classes (`DocumentNode`, `ElementNode`, `TextNode`, etc.).
--   [~] Implement the `parseHTML` function to orchestrate the tokenizer and tree builder.
+-   [x] Implement the `parseHTML` function to orchestrate the tokenizer and tree builder.
 
 ### Phase 2: API Completeness
 
