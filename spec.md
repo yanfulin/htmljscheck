@@ -86,7 +86,7 @@ The document tree is composed of different types of nodes. All nodes share a com
 -   `parent` (Node | null): The parent node of the current node, or `null` if the node has no parent.
 -   `children` (Array<Node>): An array of child nodes.
 -   `startIndex` (number): The starting index of the node in the original HTML string.
--   `endIndex` (number): The ending index of the node in the original HTML string.
+-   `endIndex` (number): (Optional) The ending index of the node in the original HTML string.
 
 ### Node Types
 
@@ -201,9 +201,9 @@ This project will be implemented in phases.
 
 -   [x] Choose and configure a testing framework (e.g., Jest, Mocha).
 -   [x] Write a comprehensive test suite to ensure correctness.
--   [ ] Create a script to download and run the html5lib-tests.
--   [ ] Write a test runner to execute the html5lib-tests and compare the results.
--   [ ] Debug and fix parsing errors until all tests pass.
+-   [x] Create a script to download and run the html5lib-tests.
+-   [x] Write a test runner to execute the html5lib-tests and compare the results.
+-   [x] Debug and fix parsing errors until all tests pass.
 
 ### Phase 4: Documentation and Release
 
