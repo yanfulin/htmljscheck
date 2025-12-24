@@ -1,5 +1,5 @@
 // src/tree-builder.js
-import { DocumentNode, ElementNode, TextNode } from './nodes.js';
+import { DocumentNode, ElementNode, TextNode, CommentNode } from './nodes.js';
 
 export class TreeBuilder {
   constructor() {
@@ -9,6 +9,25 @@ export class TreeBuilder {
 
   get current_node() {
     return this.stack[this.stack.length - 1];
+  }
+
+  run(tokens) {
+    for (const token of tokens) {
+      this.process_token(token);
+    }
+  }
+
+  process_token(token) {
+    const type = token[0];
+    if (type === 'Character') {
+      this.process_char(token[1]);
+    } else if (type === 'StartTag') {
+      this.start_tag(token);
+    } else if (type === 'EndTag') {
+      this.end_tag(token);
+    } else if (type === 'Comment') {
+      this.comment(token);
+    }
   }
 
   process_char(char) {
@@ -22,29 +41,30 @@ export class TreeBuilder {
     }
   }
 
-  process_token(token) {
-    if (token.type === 'start_tag') {
-      this.start_tag(token);
-    } else if (token.type === 'end_tag') {
-      this.end_tag(token);
-    }
-  }
-
   start_tag(token) {
     const parent = this.current_node;
-    const element = new ElementNode(token.tag);
-    element.attributes = token.attributes;
+    const element = new ElementNode(token[1]);
+    element.attributes = token[2];
     parent.children.push(element);
     element.parent = parent;
-    this.stack.push(element);
+    if (token[1] !== 'br') {
+        this.stack.push(element);
+    }
   }
 
   end_tag(token) {
     const current_node = this.current_node;
-    if (current_node.tag === token.tag) {
+    if (current_node.tag === token[1]) {
       this.stack.pop();
     } else {
       // handle mismatch later
     }
+  }
+
+  comment(token) {
+    const parent = this.current_node;
+    const comment = new CommentNode(token[1]);
+    parent.children.push(comment);
+    comment.parent = parent;
   }
 }

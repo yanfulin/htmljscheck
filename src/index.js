@@ -11,10 +11,11 @@ import { TreeBuilder } from './tree-builder.js';
  * @returns {object} The parsed document.
  */
 export function parseHTML(html, options = {}) {
-  const treeBuilder = new TreeBuilder();
-  const tokenizer = new Tokenizer(treeBuilder, options);
+  const tokenizer = new Tokenizer(options);
+  const tokens = tokenizer.run(html);
 
-  tokenizer.run(html);
+  const treeBuilder = new TreeBuilder();
+  treeBuilder.run(tokens);
 
   return {
     root: treeBuilder.document,

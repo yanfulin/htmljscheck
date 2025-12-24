@@ -1,4 +1,4 @@
-// tests/index.test.js
+// tests/parser.test.js
 
 import { parseHTML } from '../src/index.js';
 import { ParseError } from '../src/errors.js';
@@ -104,6 +104,35 @@ function testErrorHandling() {
   console.log('testErrorHandling passed!');
 }
 
+function testNestedTags() {
+    const html = '<div><p>Hello</p></div>';
+    const doc = parseHTML(html);
+    const div = doc.root.children[0];
+    assert.strictEqual(div.tag, 'div');
+    const p = div.children[0];
+    assert.strictEqual(p.tag, 'p');
+    assert.strictEqual(p.children[0].text, 'Hello');
+    console.log('testNestedTags passed!');
+  }
+  
+  function testSelfClosingTags() {
+    const html = '<br/>';
+    const doc = parseHTML(html);
+    const br = doc.root.children[0];
+    assert.strictEqual(br.tag, 'br');
+    assert.strictEqual(br.children.length, 0);
+    console.log('testSelfClosingTags passed!');
+  }
+  
+  function testComments() {
+    const html = '<!-- This is a comment -->';
+    const doc = parseHTML(html);
+    const comment = doc.root.children[0];
+    assert.strictEqual(comment.type, 'comment');
+    assert.strictEqual(comment.text, ' This is a comment ');
+    console.log('testComments passed!');
+  }
+
 
 testParseText();
 testParseStartTag();
@@ -116,3 +145,6 @@ testQuery();
 testQueryClass();
 testQueryId();
 testErrorHandling();
+testNestedTags();
+testSelfClosingTags();
+testComments();
