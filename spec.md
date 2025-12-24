@@ -211,7 +211,7 @@ This project will be implemented in phases.
 -   [x] Create a `README.md` file with installation and usage instructions.
 -   [x] Set up a build process for distribution.
 -   [x] Configure `package.json` for publishing.
--   [ ] Publish the package to npm.
+-   [x] Publish the package to npm.
 
 ## 8. Example Usage
 
