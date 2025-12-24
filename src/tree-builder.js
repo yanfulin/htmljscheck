@@ -22,17 +22,26 @@ export class TreeBuilder {
     }
   }
 
-  start_tag(tag) {
+  process_token(token) {
+    if (token.type === 'start_tag') {
+      this.start_tag(token);
+    } else if (token.type === 'end_tag') {
+      this.end_tag(token);
+    }
+  }
+
+  start_tag(token) {
     const parent = this.current_node;
-    const element = new ElementNode(tag);
+    const element = new ElementNode(token.tag);
+    element.attributes = token.attributes;
     parent.children.push(element);
     element.parent = parent;
     this.stack.push(element);
   }
 
-  end_tag(tag) {
+  end_tag(token) {
     const current_node = this.current_node;
-    if (current_node.tag === tag) {
+    if (current_node.tag === token.tag) {
       this.stack.pop();
     } else {
       // handle mismatch later

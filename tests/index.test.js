@@ -30,7 +30,30 @@ function testParseEndTag() {
   console.log('testParseEndTag passed!');
 }
 
+function testParseAttribute() {
+  const doc = parseHTML('<p id="foo"></p>');
+  assert.strictEqual(doc.root.children.length, 1);
+  const p = doc.root.children[0];
+  assert.strictEqual(p.type, 'element');
+  assert.strictEqual(p.tag, 'p');
+  assert.strictEqual(p.attributes.id, 'foo');
+  console.log('testParseAttribute passed!');
+}
+
+function testParseMultipleAttributes() {
+  const doc = parseHTML('<p id="foo" class="bar"></p>');
+  assert.strictEqual(doc.root.children.length, 1);
+  const p = doc.root.children[0];
+  assert.strictEqual(p.type, 'element');
+  assert.strictEqual(p.tag, 'p');
+  assert.strictEqual(p.attributes.id, 'foo');
+  assert.strictEqual(p.attributes.class, 'bar');
+  console.log('testParseMultipleAttributes passed!');
+}
+
 
 testParseText();
 testParseStartTag();
 testParseEndTag();
+testParseAttribute();
+testParseMultipleAttributes();
