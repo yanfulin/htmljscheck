@@ -99,7 +99,11 @@ export class DocumentNode extends Node {
    * @returns {string} The text content of the document.
    */
   toText(options = { separator: ' ' }) {
-    return this.children.map(child => child.toText(options)).join(' ').replace(/\s+/g, ' ').trim();
+    const textContent = this.children
+      .map(child => child.toText(options))
+      .filter(Boolean) // Filter out empty strings
+      .join(options.separator);
+    return textContent.replace(/\s+/g, ' ').trim();
   }
 }
 
@@ -162,7 +166,7 @@ export class ElementNode extends Node {
    * @returns {string} The text content of the element.
    */
   toText(options = { separator: ' ' }) {
-    return this.children.map(child => child.toText(options)).join(' ');
+    return this.children.map(child => child.toText(options)).join('');
   }
 
   /**
