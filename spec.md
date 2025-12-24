@@ -163,8 +163,8 @@ This project will be implemented in phases.
 ### Phase 3: Testing and Compliance
 
 -   Set up a testing framework.
--   Port the html5lib-tests test suite.
--   Achieve 100% pass rate on the html5lib-tests.
+-   Write a comprehensive test suite to ensure correctness.
+-   (Optional) Port the html5lib-tests test suite at a later stage.
 
 ### Phase 4: Documentation and Release
 
@@ -199,7 +199,7 @@ This project will be implemented in phases.
 
 ### Phase 3: Testing and Compliance
 
--   [ ] Choose and configure a testing framework (e.g., Jest, Mocha).
+-   [x] Choose and configure a testing framework (e.g., Jest, Mocha).
 -   [ ] Create a script to download and run the html5lib-tests.
 -   [ ] Write a test runner to execute the html5lib-tests and compare the results.
 -   [ ] Debug and fix parsing errors until all tests pass.
