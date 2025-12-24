@@ -184,7 +184,7 @@ This project will be implemented in phases.
 
 -   [x] Create the project structure (`src`, `tests`, etc.).
 -   [~] Implement the `Tokenizer` class.
--   [ ] Implement the state machine for the tokenizer.
+-   [~] Implement the state machine for the tokenizer.
 -   [~] Implement the `TreeBuilder` class.
 -   [x] Implement the DOM node classes (`DocumentNode`, `ElementNode`, `TextNode`, etc.).
 -   [~] Implement the `parseHTML` function to orchestrate the tokenizer and tree builder.
