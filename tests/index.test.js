@@ -11,4 +11,26 @@ function testParseText() {
   console.log('testParseText passed!');
 }
 
+function testParseStartTag() {
+  const doc = parseHTML('<p>');
+  assert.strictEqual(doc.root.children.length, 1);
+  const p = doc.root.children[0];
+  assert.strictEqual(p.type, 'element');
+  assert.strictEqual(p.tag, 'p');
+  console.log('testParseStartTag passed!');
+}
+
+function testParseEndTag() {
+  const doc = parseHTML('<p></p>');
+  assert.strictEqual(doc.root.children.length, 1);
+  const p = doc.root.children[0];
+  assert.strictEqual(p.type, 'element');
+  assert.strictEqual(p.tag, 'p');
+  assert.strictEqual(p.children.length, 0);
+  console.log('testParseEndTag passed!');
+}
+
+
 testParseText();
+testParseStartTag();
+testParseEndTag();
